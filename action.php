@@ -99,14 +99,16 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
                         'email'    => $user_data['mail']
                     );
 
-                    foreach ($meta['contributor'] as $uid => $fullname) {
-                        $contributor_data = $auth->getUserData($uid);
-                        $json_ld['contributor'][] = array(
-                            '@context' => 'http://schema.org',
-                            '@type'    => 'Person',
-                            'name'     => $fullname,
-                            'email'    => $contributor_data['mail']
-                        );
+                    if (isset($meta['contributor'])) {
+                        foreach ($meta['contributor'] as $uid => $fullname) {
+                            $contributor_data = $auth->getUserData($uid);
+                            $json_ld['contributor'][] = array(
+                                '@context' => 'http://schema.org',
+                                '@type'    => 'Person',
+                                'name'     => $fullname,
+                                'email'    => $contributor_data['mail']
+                            );
+                        }
                     }
 
                 }
