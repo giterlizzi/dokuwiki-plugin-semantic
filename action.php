@@ -124,10 +124,14 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
                         }
                     }
 
-                    $event->data["script"][] = array (
-                        "type"  => "application/ld+json",
-                        "_data" => json_encode($json_ld_webpage),
-                    );
+                    if (isset($json_ld_webpage['relatedLink'])) {
+
+                        $event->data["script"][] = array (
+                            "type"  => "application/ld+json",
+                            "_data" => json_encode($json_ld_webpage),
+                        );
+
+                    }
 
                 }
 
