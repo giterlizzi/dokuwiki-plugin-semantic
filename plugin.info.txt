@@ -1,7 +1,7 @@
 base semantic
 author Giuseppe Di Terlizzi
 email giuseppe.diterlizzi@gmail.com
-date 2015-03-25
+date 2015-03-26
 name Semantic Plugin
 desc Add Semantic Data in Dokuwiki
 url http://www.dokuwiki.org/plugin:semantic
