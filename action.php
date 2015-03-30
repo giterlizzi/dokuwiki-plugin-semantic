@@ -28,7 +28,7 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
             $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'json_ld');
         }
 
-        if ($this->getConf('useDescription')) {
+        if ($this->getConf('useMetaDescription')) {
             $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'meta_description');
         }
 
@@ -64,7 +64,7 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
                 return false;
             }
 
-            if (isset($meta['date'])) {
+            if (isset($meta['date']) && $meta['date'] !== '') {
 
                 $type        = ((isset($meta['semantic']['schema.org']['type']))
                                 ? $meta['semantic']['schema.org']['type']
@@ -161,10 +161,14 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
 
             $meta = $INFO['meta'];
 
-            if ($meta['date'] && $meta['semantic']['enabled']) {
+            if (isset($meta['semantic']['enabled']) && ! $meta['semantic']['enabled']) {
+                return false;
+            }
+
+            if (isset($meta['date']) && $meta['date'] !== '') {
     
                 $description = str_replace("\n", ' ', trim(ltrim($meta['description']['abstract'], $meta['title'])));
-        
+
                 $event->data['meta'][] = array(
                     'name'    => 'description',
                     'content' => $description,
@@ -186,12 +190,18 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
             return false;
         }
 
-        if ($this->getConf('useMetaAuthor') && $INFO['perm'] > 0) {
-    
-            if ($meta['date'] && $meta['semantic']['enabled']) {
+        if ($INFO['perm'] > 0) {
+
+            $meta = $INFO['meta'];
+
+            if (isset($meta['semantic']['enabled']) && ! $meta['semantic']['enabled']) {
+                return false;
+            }
+
+            if ((isset($meta['date']) && $meta['date'] !== '')) {
 
                 $meta = $INFO['meta'];
-        
+
                 $event->data['meta'][] = array(
                     'name'    => 'author',
                     'content' => $meta['creator'],
