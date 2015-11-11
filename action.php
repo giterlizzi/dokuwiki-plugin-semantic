@@ -36,7 +36,12 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
       $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'meta_author');
     }
 
+    if ($this->getConf('useDublinCore')) {
+      $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'meta_dublin_core');
+    }
+
   }
+
 
   /**
    * JSON-LD Event handler
@@ -45,100 +50,9 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
    */
   public function json_ld(Doku_Event &$event, $param) {
 
-    global $INFO;
-    global $ID;
+    $helper = $this->loadHelper('semantic');
 
-    if ((bool) preg_match('/'.$this->getConf('excludedPages').'/', $ID)) {
-      return false;
-    }
-
-    if (! $INFO['perm']) {
-      return false;
-    }
-
-    global $license;
-    global $auth;
-    global $conf;
-
-    $meta = $INFO['meta'];
-
-    if (isset($meta['semantic']['enabled']) && ! $meta['semantic']['enabled']) {
-      return false;
-    }
-
-    if (isset($meta['date']) && $meta['date'] !== '') {
-
-      $type        = ((isset($meta['semantic']['schema.org']['type']))
-                      ? $meta['semantic']['schema.org']['type']
-                      : $this->getConf('defaultSchemaOrgType'));
-      $user_data   = $auth->getUserData($meta['user']);
-      $license_url = @$license[$conf['license']]['url'];
-      $page_url    = wl($ID, '', true);
-      $image_url   = (($meta['relation']['firstimage']) ? ml($meta['relation']['firstimage'], '', true, '&amp;', true) : null);
-      $description = trim(ltrim($meta['description']['abstract'], @$meta['title']));
-      $created     = date(DATE_W3C, $meta['date']['created']);
-      $modified    = date(DATE_W3C, $meta['date']['modified']);
-
-      $json_ld = array(
-        '@context'      => 'http://schema.org',
-        '@type'         => $type,
-        'headline'      => @$meta['title'],
-        'name'          => @$meta['title'],
-        'image'         => array($image_url),
-        'datePublished' => $created,
-        'dateCreated'   => $created,
-        'dateModified'  => $modified,
-        'description'   => $description,
-        'license'       => $license_url,
-        'url'           => $page_url,
-      );
-
-      if (isset($meta['creator']) && $meta['creator'] !== '') {
-
-        $json_ld['creator'] = array(
-          '@context' => 'http://schema.org',
-          '@type'    => 'Person',
-          'name'     => $meta['creator'],
-          'email'    => $user_data['mail']
-        );
-
-        if (isset($meta['contributor'])) {
-          foreach ($meta['contributor'] as $uid => $fullname) {
-            $contributor_data = $auth->getUserData($uid);
-            $json_ld['contributor'][] = array(
-              '@context' => 'http://schema.org',
-              '@type'    => 'Person',
-              'name'     => $fullname,
-              'email'    => $contributor_data['mail']
-            );
-          }
-        }
-
-      }
-
-      if (isset($meta['relation']['references'])) {
-
-        $json_ld_webpage = array(
-          '@context' => 'http://schema.org',
-          '@type'    => 'WebPage'
-        );
-
-        foreach ($meta['relation']['references'] as $page => $status) {
-          if ($status) {
-            $json_ld_webpage['relatedLink'][] = wl($page, '', true);
-          }
-        }
-
-        if (isset($json_ld_webpage['relatedLink'])) {
-
-          $event->data["script"][] = array (
-            "type"  => "application/ld+json",
-            "_data" => json_encode($json_ld_webpage),
-          );
-
-        }
-
-      }
+    if ($json_ld = $helper->getStructuredData()) {
 
       $event->data["script"][] = array (
         "type"  => "application/ld+json",
@@ -147,31 +61,23 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
 
     }
 
+    if ($json_ld_relations = $helper->getBacklinks()) {
+      $event->data["script"][] = array (
+        "type"  => "application/ld+json",
+        "_data" => json_encode($json_ld_relations),
+      );
+    }
+
   }
 
 
   public function meta_description(Doku_Event &$event, $params) {
 
-    global $INFO;
-    global $ID;
+    $helper = $this->loadHelper('semantic');
 
-    if ((bool) preg_match_all('/'.$this->getConf('excludedPages').'/', $ID)) {
-      return false;
-    }
+    if ($description = $helper->getDescription()) {
 
-    if (! $INFO['perm']) {
-      return false;
-    }
-
-    $meta = $INFO['meta'];
-
-    if (isset($meta['semantic']['enabled']) && ! $meta['semantic']['enabled']) {
-      return false;
-    }
-
-    if (isset($meta['date']) && $meta['date'] !== '') {
-
-      $description = str_replace("\n", ' ', trim(ltrim($meta['description']['abstract'], @$meta['title'])));
+      $description = str_replace("\n", ' ', $description);
 
       $event->data['meta'][] = array(
         'name'    => 'description',
@@ -185,31 +91,33 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
 
   public function meta_author(Doku_Event &$event, $params) {
 
-    global $INFO;
-    global $ID;
+    $helper = $this->loadHelper('semantic');
 
-    if ((bool) preg_match_all('/'.$this->getConf('excludedPages').'/', $ID)) {
-      return false;
-    }
-
-    if (! $INFO['perm']) {
-      return false;
-    }
-
-    $meta = $INFO['meta'];
-
-    if (isset($meta['semantic']['enabled']) && ! $meta['semantic']['enabled']) {
-      return false;
-    }
-
-    if ((isset($meta['date']) && $meta['date'] !== '')) {
-
-      $meta = $INFO['meta'];
+    if ($author = $helper->getAuthor()) {
 
       $event->data['meta'][] = array(
         'name'    => 'author',
-        'content' => $meta['creator'],
+        'content' => $author,
       );
+
+    }
+
+  }
+
+
+  public function meta_dublin_core(Doku_Event &$event, $params) {
+
+    $helper = $this->loadHelper('semantic');
+
+    foreach ($helper->getDublinCore() as $name => $content) {
+
+      if (! $content) continue;
+
+      $event->data['meta'][] = array(
+        'name'    => $name,
+        'content' => $content,
+      );
+
     }
 
   }
