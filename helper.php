@@ -171,12 +171,15 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     global $conf;
     global $ID;
 
-    if (! $this->meta = $this->getMetadata()) return false;
+    if (! $this->meta) return false;
 
     $license = $this->getLicense();
     $contributors = array();
-    foreach ($this->meta['contributor'] as $uid => $fullname) {
-      $contributors[] = $fullname;
+
+    if (isset($this->meta['contributor'])) {
+      foreach ($this->meta['contributor'] as $uid => $fullname) {
+        $contributors[] = $fullname;
+      }
     }
 
     $dublin_core = array(
