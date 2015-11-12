@@ -171,7 +171,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     global $conf;
     global $ID;
 
-    if (! $this->meta) return false;
+    if (! $this->meta) return array();
 
     $license = $this->getLicense();
     $contributors = array();
