@@ -12,12 +12,9 @@ if(!defined('DOKU_INC')) die();
 class helper_plugin_semantic extends DokuWiki_Plugin {
 
   private $meta = array();
+  private $page = null;
 
-  public function __construct() {
-    $this->meta = $this->getMetadata();
-  }
-
-  private function getMetadata() {
+  public function getMetadata($page) {
 
     global $INFO;
     global $ID;
@@ -25,13 +22,17 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     global $auth;
     global $conf;
 
-    if ((bool) preg_match('/'. trim($this->getConf('excludedPages')) .'/', $ID)) return false;
+    $this->page = cleanID($page);
 
-    if (! $INFO['perm']) return false;
+    $auth_check = auth_quickaclcheck($this->page);
 
-    $this->meta = $INFO['meta'];
+    if ((bool) preg_match('/'. trim($this->getConf('excludedPages')) .'/', $this->page)) return false;
 
-    if (isset($this->meta['semantic']['enabled']) && ! $this->meta['semantic']['enabled']) {
+    if (! $auth_check) return false;
+
+    $this->meta = p_get_metadata($page);
+
+    if (isset($this->meta['plugin']['semantic']['enabled']) && ! $this->meta['plugin']['semantic']['enabled']) {
       return false;
     }
 
@@ -42,8 +43,9 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
   }
 
   public function getSchemaOrgType() {
-    return ((isset($this->meta['semantic']['schema.org']['type']))
-             ? $this->meta['semantic']['schema.org']['type']
+
+    return ((isset($this->meta['plugin']['semantic']['schema.org']['type']))
+             ? $this->meta['plugin']['semantic']['schema.org']['type']
              : $this->getConf('defaultSchemaOrgType'));
   }
 
@@ -88,8 +90,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
    */
   public function getStructuredData() {
 
-    global $INFO;
-    global $ID;
     global $auth;
     global $conf;
 
@@ -99,17 +99,18 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     $type        = $this->getSchemaOrgType();
     $user_data   = $auth->getUserData($this->getAuthorID());
     $license_url = $license['url'];
-    $page_url    = wl($ID, '', true);
+    $page_url    = wl($this->page, '', true);
     $image_url   = $this->getFirstImageURL();
     $description = $this->getDescription();
     $created     = date(DATE_W3C, $this->getCreatedDate());
     $modified    = date(DATE_W3C, $this->getModifiedDate());
+    $title       = (isset($this->meta['title']) ? $this->meta['title'] : $this->page);
 
     $json_ld = array(
       '@context'      => 'http://schema.org',
       '@type'         => $type,
-      'headline'      => @$this->meta['title'],
-      'name'          => @$this->meta['title'],
+      'headline'      => $title,
+      'name'          => $title,
       'image'         => array($image_url),
       'datePublished' => $created,
       'dateCreated'   => $created,
@@ -146,11 +147,27 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
 
   }
 
+
+  public function getJsonLD() {
+
+    $json_ld = array();
+
+    if ($structured_data = $this->getStructuredData()) {
+      $json_ld[] = $structured_data;
+    }
+
+    if ($backlinks = $this->getBacklinks()) {
+      $json_ld[] = $backlinks;
+    }
+
+    return $json_ld;
+
+  }
+
+
   public function getBacklinks() {
 
-    global $ID;
-
-    if (! $backlinks = ft_backlinks($ID)) return false;
+    if (! $backlinks = ft_backlinks($this->page)) return false;
 
     $json_ld_webpage = array(
       '@context' => 'http://schema.org',
@@ -169,7 +186,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
   public function getDublinCore() {
 
     global $conf;
-    global $ID;
 
     if (! $this->meta) return array();
 
@@ -192,7 +208,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
       'DC.Created'      => date(DATE_W3C, $this->getCreatedDate()),
       'DC.Modified'     => date(DATE_W3C, $this->getModifiedDate()),
       'DC.Date'         => date(DATE_W3C, $this->getCreatedDate()),
-      'DC.Identifier'   => "urn:$ID",
+      'DC.Identifier'   => "urn:" . $this->page,
     );
 
     return $dublin_core;

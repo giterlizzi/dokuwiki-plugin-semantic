@@ -34,22 +34,20 @@ class syntax_plugin_semantic extends DokuWiki_Syntax_Plugin {
 
   function render($mode, Doku_Renderer $renderer, $data) {
 
-    if ($mode == 'xthml') {
-        return true; // don't output anything
-    } elseif ($mode == 'metadata') {
+    if ($mode == 'metadata') {
 
       list($match, $state, $pos) = $data;
 
-
-
       if ($match == '~~NOSEMANTIC~~') {
-        $renderer->meta['semantic']['enabled'] = false;
+        $renderer->meta['plugin']['semantic']['enabled'] = false;
       } else {
-        $renderer->meta['semantic']['schema.org']['type'] = trim(str_replace('Schema.org/', '', $match), '~~');
-        $renderer->meta['semantic']['enabled'] = true;
+        $renderer->meta['plugin']['semantic']['schema.org']['type'] = trim(str_replace('Schema.org/', '', $match), '~~');
+        $renderer->meta['plugin']['semantic']['enabled'] = true;
       }
 
     }
+
+    return false;
 
   }
 

@@ -17,6 +17,12 @@ if(!defined('DOKU_INC')) die();
  */
 class action_plugin_semantic extends DokuWiki_Action_Plugin {
 
+  private $helper = null;
+
+  public function __construct() {
+    $this->helper =& $this->loadHelper('semantic');
+  }
+
   /**
    * Register events
    *
@@ -40,8 +46,46 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
       $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'meta_dublin_core');
     }
 
+    $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'ajax');
+
   }
 
+
+  /**
+   * Export in JSON-LD format
+   *
+   * @param   Doku_Event &$event
+   * @return  string
+   */
+  public function ajax(Doku_Event &$event, $param) {
+
+    if ($event->data !== 'plugin_semantic') {
+      return false;
+    }
+
+    //no other ajax call handlers needed
+    $event->stopPropagation();
+    $event->preventDefault();
+
+    global $INPUT;
+
+    $export = $INPUT->str('export');
+    $id     = $INPUT->str('id');
+
+    if (! $id) return false;
+
+    $this->helper->getMetadata($id);
+    $json_ld = $this->helper->getJsonLD();
+
+    //if ($INPUT->str('export') == 'json-ld' && $page = $INPUT->str('page') && $json_ld = $this->helper->getJsonLD()) {
+      header('Content-Type: application/ld+json');
+      print json_encode($json_ld);
+      return true;
+    //}
+
+    return false;
+
+  }
 
   /**
    * JSON-LD Event handler
@@ -50,32 +94,28 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
    */
   public function json_ld(Doku_Event &$event, $param) {
 
-    $helper = $this->loadHelper('semantic');
+    global $ID;
 
-    if ($json_ld = $helper->getStructuredData()) {
+    $this->helper->getMetadata($ID);
+    $json_ld = $this->helper->getJsonLD();
 
-      $event->data["script"][] = array (
-        "type"  => "application/ld+json",
-        "_data" => json_encode($json_ld),
-      );
+    if (! count($json_ld)) return false;
 
-    }
-
-    if ($json_ld_relations = $helper->getBacklinks()) {
-      $event->data["script"][] = array (
-        "type"  => "application/ld+json",
-        "_data" => json_encode($json_ld_relations),
-      );
-    }
+    $event->data["script"][] = array (
+      "type"  => "application/ld+json",
+      "_data" => json_encode($json_ld),
+    );
 
   }
 
 
   public function meta_description(Doku_Event &$event, $params) {
 
-    $helper = $this->loadHelper('semantic');
+    global $ID;
 
-    if ($description = $helper->getDescription()) {
+    $this->helper->getMetadata($ID);
+
+    if ($description = $this->helper->getDescription()) {
 
       $description = str_replace("\n", ' ', $description);
 
@@ -91,9 +131,11 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
 
   public function meta_author(Doku_Event &$event, $params) {
 
-    $helper = $this->loadHelper('semantic');
+    global $ID;
 
-    if ($author = $helper->getAuthor()) {
+    $this->helper->getMetadata($ID);
+
+    if ($author = $this->helper->getAuthor()) {
 
       $event->data['meta'][] = array(
         'name'    => 'author',
@@ -107,9 +149,11 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
 
   public function meta_dublin_core(Doku_Event &$event, $params) {
 
-    $helper = $this->loadHelper('semantic');
+    global $ID;
 
-    foreach ($helper->getDublinCore() as $name => $content) {
+    $this->helper->getMetadata($ID);
+
+    foreach ($this->helper->getDublinCore() as $name => $content) {
 
       if (! $content) continue;
 
