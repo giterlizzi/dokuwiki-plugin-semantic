@@ -20,7 +20,7 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
   private $helper = null;
 
   public function __construct() {
-    $this->helper =& $this->loadHelper('semantic');
+    $this->helper = $this->loadHelper('semantic');
   }
 
   /**
@@ -31,6 +31,7 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
   public function register(Doku_Event_Handler $controller) {
 
     if ($this->getConf('useJSONLD')) {
+      $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'website');
       $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'json_ld');
     }
 
@@ -46,10 +47,23 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
       $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'meta_dublin_core');
     }
 
-    $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'ajax');
+    if ($this->getConf('exposeWebService')) {
+      $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'ajax');
+    }
 
-  }
+      $controller->register_hook('DOKUWIKI_STARTED', 'AFTER', $this, 'jsinfo');
+    }
 
+
+    public function jsinfo(Doku_Event &$event, $param) {
+
+      global $JSINFO;
+
+      $JSINFO['plugin']['semantic'] = array(
+        'exposeWebService' => $this->getConf('exposeWebService'),
+      );
+
+    }
 
   /**
    * Export in JSON-LD format
@@ -77,15 +91,22 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
     $this->helper->getMetadata($id);
     $json_ld = $this->helper->getJsonLD();
 
-    //if ($INPUT->str('export') == 'json-ld' && $page = $INPUT->str('page') && $json_ld = $this->helper->getJsonLD()) {
-      header('Content-Type: application/ld+json');
-      print json_encode($json_ld);
-      return true;
-    //}
+    $json = new JSON();
 
-    return false;
+    header('Content-Type: application/ld+json');
+    print $json->encode($json_ld);
+    return true;
 
   }
+
+
+  public function website(Doku_Event &$event, $param) {
+    $event->data["script"][] = array (
+      "type"  => "application/ld+json",
+      "_data" => json_encode($this->helper->getWebSite()),
+    );
+  }
+
 
   /**
    * JSON-LD Event handler

@@ -13,3 +13,4 @@ $lang['useDublinCore']        = 'Add Dublin Core metadata';
 $lang['useJSONLD']            = 'Add JSON-LD';
 $lang['defaultSchemaOrgType'] = 'Default Schema.org type for JSON-LD';
 $lang['excludedPages']        = 'Excluded pages (insert a regex)';
+$lang['exposeWebService']     = 'Expose Ajax WebService';

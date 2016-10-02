@@ -14,6 +14,28 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
   private $meta = array();
   private $page = null;
 
+
+  public function getWebSite() {
+
+    global $conf;
+
+    $json_ld = array(
+      '@context' => 'http://schema.org',
+      '@type' => 'Website',
+      'url' => DOKU_URL,
+      'name' => $conf['title'],
+      'potentialAction' => array(
+        '@type' => 'SearchAction',
+        'target' => DOKU_URL.DOKU_SCRIPT.'?do=search&amp;id={search_term_string}',
+        'query-input' => 'required name=search_term_string'
+      )
+    );
+
+    return $json_ld;
+
+  }
+
+
   public function getMetadata($page) {
 
     global $INFO;
@@ -49,12 +71,16 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
              : $this->getConf('defaultSchemaOrgType'));
   }
 
+  public function getFirstImage() {
+    return ((@$this->meta['relation']['firstimage']) ? $this->meta['relation']['firstimage'] : null);
+  }
+
   public function getFirstImageURL() {
-    return (($this->meta['relation']['firstimage']) ? ml($this->meta['relation']['firstimage'], '', true, '&amp;', true) : null);
+    return ($this->getFirstImage() ? ml($this->getFirstImage(), '', true, '&amp;', true) : null);
   }
 
   public function getDescription() {
-    return trim(ltrim($this->meta['description']['abstract'], @$this->meta['title']));
+    return trim(ltrim(@$this->meta['description']['abstract'], $this->getTitle()));
   }
 
   public function getAuthor() {
@@ -66,15 +92,15 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
   }
 
   public function getTitle() {
-    return ($this->meta['title'] ? $this->meta['title'] : null);
+    return (@$this->meta['title'] ? $this->meta['title'] : null);
   }
 
   public function getCreatedDate() {
-    return $this->meta['date']['created'];
+    return ((@$this->meta['date']['created']) ? $this->meta['date']['created'] : -1);
   }
 
   public function getModifiedDate() {
-    return $this->meta['date']['modified'];
+    return ((@$this->meta['date']['modified']) ? $this->meta['date']['modified'] : -1);
   }
 
   public function getLicense() {
@@ -100,7 +126,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     $user_data   = $auth->getUserData($this->getAuthorID());
     $license_url = $license['url'];
     $page_url    = wl($this->page, '', true);
-    $image_url   = $this->getFirstImageURL();
     $description = $this->getDescription();
     $created     = date(DATE_W3C, $this->getCreatedDate());
     $modified    = date(DATE_W3C, $this->getModifiedDate());
@@ -111,14 +136,30 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
       '@type'         => $type,
       'headline'      => $title,
       'name'          => $title,
-      'image'         => array($image_url),
       'datePublished' => $created,
       'dateCreated'   => $created,
       'dateModified'  => $modified,
       'description'   => $description,
       'license'       => $license_url,
       'url'           => $page_url,
+      'mainEntityOfPage' => array(
+        '@type' => 'WebPage',
+        '@id'   => $page_url,
+      ),
     );
+
+    if ($image_url = $this->getFirstImageURL()) {
+
+      $image_info    = array();
+      $article_image = tpl_getMediaFile(array($this->getFirstImage()), true, $logo_info);
+
+      $json_ld['image'] = array(
+        '@type'  => 'ImageObject',
+        'url'    => $image_url,
+        'width'  => 0,
+        'height' => 0,
+      );
+    }
 
     if ($author = $this->getAuthor()) {
 
@@ -127,6 +168,18 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
         '@type'    => 'Person',
         'name'     => $author,
         'email'    => $user_data['mail']
+      );
+
+      $logo_info = array();
+      $wiki_logo = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $logo_info);
+
+      $json_ld['author']    = $json_ld['creator'];
+      $json_ld['publisher'] = $json_ld['creator'];
+      $json_ld['publisher']['logo'] = array(
+        '@type'  => 'ImageObject',
+        'url'    => $wiki_logo,
+        'width'  => $logo_info[0],
+        'height' => $logo_info[1],
       );
 
       if (isset($this->meta['contributor'])) {
@@ -192,7 +245,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     $license = $this->getLicense();
     $contributors = array();
 
-    if (isset($this->meta['contributor'])) {
+    if (isset($this->meta['contributor']) && is_array($this->meta['contributor'])) {
       foreach ($this->meta['contributor'] as $uid => $fullname) {
         $contributors[] = $fullname;
       }
