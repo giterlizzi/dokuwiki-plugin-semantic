@@ -47,6 +47,10 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
       $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'meta_dublin_core');
     }
 
+    if ($this->getConf('useOpenGraph')) {
+      $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'meta_open_graph');
+    }
+
     if ($this->getConf('exposeWebService')) {
       $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, 'ajax');
     }
@@ -161,6 +165,26 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin {
       $event->data['meta'][] = array(
         'name'    => 'author',
         'content' => $author,
+      );
+
+    }
+
+  }
+
+
+  public function meta_open_graph(Doku_Event &$event, $params) {
+
+    global $ID;
+
+    $this->helper->getMetadata($ID);
+
+    foreach ($this->helper->getOpenGraph() as $property => $content) {
+
+      if (! $content) continue;
+
+      $event->data['meta'][] = array(
+        'property' => $property,
+        'content'  => $content,
       );
 
     }

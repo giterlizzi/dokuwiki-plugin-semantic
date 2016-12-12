@@ -52,7 +52,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
 
     if (! $auth_check) return false;
 
-    $this->meta = p_get_metadata($page);
+    $this->meta = p_get_metadata($this->page);
 
     if (isset($this->meta['plugin']['semantic']['enabled']) && ! $this->meta['plugin']['semantic']['enabled']) {
       return false;
@@ -265,6 +265,24 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     );
 
     return $dublin_core;
+
+  }
+
+
+  public function getOpenGraph() {
+
+    global $conf;
+
+    if (! $this->meta) return array();
+
+    $open_graph = array(
+      'og:title'       => $this->getTitle(),
+      'og:description' => str_replace("\n", ' ', $this->getDescription()),
+      'og:url'         => wl($this->page, '', true),
+      'og:type'        => 'website',
+    );
+
+    return $open_graph;
 
   }
 

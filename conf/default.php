@@ -11,4 +11,5 @@ $conf['exposeWebService']     = 1;
 $conf['useMetaDescription']   = 1;
 $conf['useMetaAuthor']        = 1;
 $conf['useDublinCore']        = 0;
+$conf['useOpenGraph']         = 0;
 $conf['excludedPages']        = '(wiki|playground)';
