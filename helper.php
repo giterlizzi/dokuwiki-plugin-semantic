@@ -281,6 +281,10 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
       'og:url'         => wl($this->page, '', true),
       'og:type'        => 'website',
     );
+    
+    if ($image_url = $this->getFirstImageURL()) {
+      $open_graph['og:image'] = $image_url;
+    }
 
     return $open_graph;
 
