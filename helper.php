@@ -280,6 +280,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
       'og:description' => str_replace("\n", ' ', $this->getDescription()),
       'og:url'         => wl($this->page, '', true),
       'og:type'        => 'website',
+      'og:image'       => $this->getFirstImageURL(),
     );
 
     return $open_graph;
