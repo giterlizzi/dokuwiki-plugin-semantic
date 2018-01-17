@@ -121,15 +121,18 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
 
     if (! count($this->meta)) return false;
 
-    $license     = $this->getLicense();
-    $type        = $this->getSchemaOrgType();
-    $user_data   = $auth->getUserData($this->getAuthorID());
-    $license_url = $license['url'];
-    $page_url    = wl($this->page, '', true);
-    $description = $this->getDescription();
-    $created     = date(DATE_W3C, $this->getCreatedDate());
-    $modified    = date(DATE_W3C, $this->getModifiedDate());
-    $title       = (isset($this->meta['title']) ? $this->meta['title'] : $this->page);
+    $license        = $this->getLicense();
+    $type           = $this->getSchemaOrgType();
+    $user_data      = $auth->getUserData($this->getAuthorID());
+    $license_url    = $license['url'];
+    $page_url       = wl($this->page, '', true);
+    $description    = $this->getDescription();
+    $created        = date(DATE_W3C, $this->getCreatedDate());
+    $modified       = date(DATE_W3C, $this->getModifiedDate());
+    $title          = (isset($this->meta['title']) ? $this->meta['title'] : $this->page);
+    $wiki_logo_info = array();
+    $wiki_logo      = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $wiki_logo_info);
+
 
     $json_ld = array(
       '@context'      => 'http://schema.org',
@@ -142,44 +145,49 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
       'description'   => $description,
       'license'       => $license_url,
       'url'           => $page_url,
+
       'mainEntityOfPage' => array(
         '@type' => 'WebPage',
         '@id'   => $page_url,
       ),
+
+      'publisher' => array(
+        '@type' => 'Organization',
+        'name'  => $conf['title'],
+        'logo'  => array(
+          '@type' => 'ImageObject',
+          'url'   => $wiki_logo,
+        ),
+      )
+
     );
 
     if ($image_url = $this->getFirstImageURL()) {
 
       $image_info    = array();
-      $article_image = tpl_getMediaFile(array($this->getFirstImage()), true, $logo_info);
+      $article_image = tpl_getMediaFile(array(':' . $this->getFirstImage()), true, $image_info);
 
       $json_ld['image'] = array(
         '@type'  => 'ImageObject',
         'url'    => $image_url,
-        'width'  => 0,
-        'height' => 0,
+        'width'  => $image_info[0],
+        'height' => $image_info[1],
       );
+
+    } else {
+
+      // Fallback
+      $json_ld['image'] = $json_ld['publisher']['logo'];
+
     }
 
     if ($author = $this->getAuthor()) {
 
-      $json_ld['creator'] = array(
+      $json_ld['author'] = array(
         '@context' => 'http://schema.org',
         '@type'    => 'Person',
         'name'     => $author,
         'email'    => $user_data['mail']
-      );
-
-      $logo_info = array();
-      $wiki_logo = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $logo_info);
-
-      $json_ld['author']    = $json_ld['creator'];
-      $json_ld['publisher'] = $json_ld['creator'];
-      $json_ld['publisher']['logo'] = array(
-        '@type'  => 'ImageObject',
-        'url'    => $wiki_logo,
-        'width'  => $logo_info[0],
-        'height' => $logo_info[1],
       );
 
       if (isset($this->meta['contributor'])) {
@@ -275,12 +283,29 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
 
     if (! $this->meta) return array();
 
+    $locale = $conf['lang'];
+
+    if ($locale == 'en') {
+      $locale = 'en_GB';
+    } else {
+      $locale .= '_' . strtoupper($locale);
+    }
+
     $open_graph = array(
-      'og:title'       => $this->getTitle(),
-      'og:description' => str_replace("\n", ' ', $this->getDescription()),
-      'og:url'         => wl($this->page, '', true),
-      'og:type'        => 'website',
-      'og:image'       => $this->getFirstImageURL(),
+
+      'og:title'               => $this->getTitle(),
+      'og:description'         => str_replace("\n", ' ', $this->getDescription()),
+      'og:url'                 => wl($this->page, '', true),
+      'og:type'                => 'article',
+      'og:image'               => $this->getFirstImageURL(),
+      'og:locale'              => $locale,
+      'og:site_name'           => $conf['title'],
+
+      'article:published_time' => date(DATE_W3C, $this->getCreatedDate()),
+      'article:modified_time'  => date(DATE_W3C, $this->getModifiedDate()),
+      'article:section'        => date(DATE_W3C, $this->getModifiedDate()),
+      'article:author'         => $this->getAuthor(),
+
     );
 
     return $open_graph;
