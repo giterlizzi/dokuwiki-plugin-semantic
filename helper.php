@@ -177,7 +177,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     } else {
 
       // Fallback
-      $json_ld['image'] = $json_ld['publisher']['logo'];
+      //$json_ld['image'] = $json_ld['publisher']['logo'];
 
     }
 
