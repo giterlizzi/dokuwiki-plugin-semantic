@@ -21,7 +21,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
 
     $json_ld = array(
       '@context' => 'http://schema.org',
-      '@type' => 'Website',
+      '@type' => 'WebSite',
       'url' => DOKU_URL,
       'name' => $conf['title'],
       'potentialAction' => array(
