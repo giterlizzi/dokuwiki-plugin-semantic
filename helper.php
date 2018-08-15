@@ -21,12 +21,12 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
 
     $json_ld = array(
       '@context' => 'http://schema.org',
-      '@type' => 'WebSite',
-      'url' => DOKU_URL,
-      'name' => $conf['title'],
+      '@type'    => 'WebSite',
+      'url'      => DOKU_URL,
+      'name'     => $conf['title'],
       'potentialAction' => array(
-        '@type' => 'SearchAction',
-        'target' => DOKU_URL.DOKU_SCRIPT.'?do=search&amp;id={search_term_string}',
+        '@type'       => 'SearchAction',
+        'target'      => DOKU_URL.DOKU_SCRIPT.'?do=search&amp;id={search_term_string}',
         'query-input' => 'required name=search_term_string'
       )
     );
@@ -80,7 +80,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
   }
 
   public function getDescription() {
-    return trim(ltrim(@$this->meta['description']['abstract'], $this->getTitle()));
+    return (@$this->meta['description']['abstract'] ? $this->meta['description']['abstract']: $this->getTitle());
   }
 
   public function getAuthor() {
