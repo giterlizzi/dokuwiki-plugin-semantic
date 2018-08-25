@@ -80,7 +80,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
   }
 
   public function getDescription() {
-    return (@$this->meta['description']['abstract'] ? $this->meta['description']['abstract']: $this->getTitle());
+    return (@$this->meta['description']['abstract'] ? str_replace("\n\n",". ",$this->meta['description']['abstract']): $this->getTitle());
   }
 
   public function getAuthor() {
