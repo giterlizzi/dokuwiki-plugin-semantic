@@ -126,7 +126,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
     $user_data      = $auth->getUserData($this->getAuthorID());
     $license_url    = $license['url'];
     $page_url       = wl($this->page, '', true);
-    $description    = $this->getDescription();
+    $description    = str_replace("\n", ' ', $this->getDescription());
     $created        = date(DATE_W3C, $this->getCreatedDate());
     $modified       = date(DATE_W3C, $this->getModifiedDate());
     $title          = (isset($this->meta['title']) ? $this->meta['title'] : $this->page);
