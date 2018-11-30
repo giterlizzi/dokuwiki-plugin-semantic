@@ -187,7 +187,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
         '@context' => 'http://schema.org',
         '@type'    => 'Person',
         'name'     => $author,
-        'email'    => $user_data['mail']
+        #'email'    => $user_data['mail']
       );
 
       if (isset($this->meta['contributor'])) {
@@ -197,7 +197,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
             '@context' => 'http://schema.org',
             '@type'    => 'Person',
             'name'     => $fullname,
-            'email'    => $contributor_data['mail']
+            #'email'    => $contributor_data['mail']
           );
         }
       }
