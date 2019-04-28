@@ -307,6 +307,10 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
       'article:author'         => $this->getAuthor(),
 
     );
+    
+    if ($image_url = $this->getFirstImageURL()) {
+      $open_graph['og:image'] = $image_url;
+    }
 
     return $open_graph;
 
