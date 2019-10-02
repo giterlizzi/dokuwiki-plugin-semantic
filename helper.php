@@ -291,13 +291,19 @@ class helper_plugin_semantic extends DokuWiki_Plugin {
       $locale .= '_' . strtoupper($locale);
     }
 
+    $image_url = $this->getFirstImageURL();
+
+    if( !$image_url ) {
+      $image_url = tpl_getMediaFile(array(':wiki:og_image.png', ':og_image.png',  ':wiki:logo.png','images/logo.png'), true);
+    }
+
     $open_graph = array(
 
       'og:title'               => $this->getTitle(),
       'og:description'         => str_replace("\n", ' ', $this->getDescription()),
       'og:url'                 => wl($this->page, '', true),
       'og:type'                => 'article',
-      'og:image'               => $this->getFirstImageURL(),
+      'og:image'               => $image_url,
       'og:locale'              => $locale,
       'og:site_name'           => $conf['title'],
 
