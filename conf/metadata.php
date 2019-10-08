@@ -13,3 +13,4 @@ $meta['useJSONLD']            = array('onoff');
 $meta['exposeWebService']     = array('onoff');
 $meta['defaultSchemaOrgType'] = array('multichoice','_choices' => array('Article', 'NewsArticle', 'TechArticle', 'BlogPosting', 'Recipe'));
 $meta['excludedPages']        = array('regex');
+$meta['hideMail']             = array('onoff');

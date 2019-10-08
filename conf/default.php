@@ -13,3 +13,4 @@ $conf['useMetaAuthor']        = 1;
 $conf['useDublinCore']        = 0;
 $conf['useOpenGraph']         = 0;
 $conf['excludedPages']        = '(wiki|playground)';
+$conf['hideMail']             = 0;
