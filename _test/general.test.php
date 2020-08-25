@@ -6,13 +6,15 @@
  * @group plugin_semantic
  * @group plugins
  */
-class general_plugin_semantic_test extends DokuWikiTest {
+class general_plugin_semantic_test extends DokuWikiTest
+{
 
     /**
      * Simple test to make sure the plugin.info.txt is in correct format
      */
-    public function test_plugininfo() {
-        $file = __DIR__.'/../plugin.info.txt';
+    public function test_plugininfo()
+    {
+        $file = __DIR__ . '/../plugin.info.txt';
         $this->assertFileExists($file);
 
         $info = confToHash($file);
@@ -32,4 +34,3 @@ class general_plugin_semantic_test extends DokuWikiTest {
         $this->assertTrue(false !== strtotime($info['date']));
     }
 }
-

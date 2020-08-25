@@ -4,13 +4,9 @@
  *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Giuseppe Di Terlizzi <giuseppe.diterlizzi@gmail.com>
- * @copyright  (C) 2015-2019, Giuseppe Di Terlizzi
+ * @copyright  (C) 2015-2020, Giuseppe Di Terlizzi
  */
 
-// must be run within Dokuwiki
-if (!defined('DOKU_INC')) {
-    die();
-}
 
 /**
  * Class Semantic Action Plugin
@@ -108,10 +104,8 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
         $this->helper->getMetadata($id);
         $json_ld = $this->helper->getJsonLD();
 
-        $json = new JSON();
-
         header('Content-Type: application/ld+json');
-        print $json->encode($json_ld);
+        print json_encode($json_ld);
         return true;
 
     }
