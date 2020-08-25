@@ -24,7 +24,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         global $conf;
 
         $json_ld = array(
-            '@context'        => 'http://schema.org',
+            '@context'        => 'http://schema.org/',
             '@type'           => 'WebSite',
             'url'             => DOKU_URL,
             'name'            => $conf['title'],
@@ -214,7 +214,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         $wiki_logo      = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $wiki_logo_info);
 
         $json_ld = array(
-            '@context'         => 'http://schema.org',
+            '@context'         => 'http://schema.org/',
             '@type'            => $type,
             'headline'         => $title,
             'name'             => $title,
@@ -263,7 +263,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         if ($author = $this->getAuthor()) {
 
             $json_ld['author'] = array(
-                '@context' => 'http://schema.org',
+                '@context' => 'http://schema.org/',
                 '@type'    => 'Person',
                 'name'     => $author,
                 'email'    => $user_data['mail'],
@@ -275,7 +275,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
                     $contributor_data = ($this->getConf('hideMail') ? array('mail' => null) : $auth->getUserData($uid));
 
                     $json_ld['contributor'][] = array(
-                        '@context' => 'http://schema.org',
+                        '@context' => 'http://schema.org/',
                         '@type'    => 'Person',
                         'name'     => $fullname,
                         'email'    => $contributor_data['mail'],
@@ -314,7 +314,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         }
 
         $json_ld_webpage = array(
-            '@context' => 'http://schema.org',
+            '@context' => 'http://schema.org/',
             '@type'    => 'WebPage',
         );
 
