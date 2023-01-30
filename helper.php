@@ -136,7 +136,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getAuthor()
     {
-        return ($this->meta['creator'] ? $this->meta['creator'] : null);
+        return array_key_exists('creator', $this->meta) ? $this->meta['creator'] : null;
     }
 
     /**
@@ -209,7 +209,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         $license        = $this->getLicense();
         $type           = $this->getSchemaOrgType();
         $user_data      = ($this->getConf('hideMail') ? array('mail' => null) : $auth->getUserData($this->getAuthorID()));
-        $license_url    = $license['url'];
+        $license_url    = (($license !== null) and array_key_exists('url', $license)) ? $license['url'] : null;
         $page_url       = wl($this->page, '', true);
         $description    = str_replace("\n", ' ', $this->getDescription());
         $created        = date(DATE_W3C, $this->getCreatedDate());
