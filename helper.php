@@ -4,7 +4,7 @@
  *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Giuseppe Di Terlizzi <giuseppe.diterlizzi@gmail.com>
- * @copyright  (C) 2015-2020, Giuseppe Di Terlizzi
+ * @copyright  (C) 2015-2022, Giuseppe Di Terlizzi
  */
 
 class helper_plugin_semantic extends DokuWiki_Plugin
@@ -101,7 +101,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getFirstImage()
     {
-        return ((@$this->meta['relation']['firstimage']) ? $this->meta['relation']['firstimage'] : null);
+        return (isset($this->meta['relation']['firstimage']) ? $this->meta['relation']['firstimage'] : null);
     }
 
     /**
@@ -121,7 +121,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getDescription()
     {
-        return (@$this->meta['description']['abstract'] ? $this->meta['description']['abstract'] : $this->getTitle());
+        return (isset($this->meta['description']['abstract']) ? $this->meta['description']['abstract'] : $this->getTitle());
     }
 
     /**
@@ -151,7 +151,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getTitle()
     {
-        return (@$this->meta['title'] ? $this->meta['title'] : null);
+        return (isset($this->meta['title']) ? $this->meta['title'] : null);
     }
 
     /**
@@ -161,7 +161,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getCreatedDate()
     {
-        return ((@$this->meta['date']['created']) ? $this->meta['date']['created'] : -1);
+        return (isset($this->meta['date']['created']) ? $this->meta['date']['created'] : -1);
     }
 
     /**
@@ -171,7 +171,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getModifiedDate()
     {
-        return ((@$this->meta['date']['modified']) ? $this->meta['date']['modified'] : -1);
+        return (isset($this->meta['date']['modified']) ? $this->meta['date']['modified'] : -1);
     }
 
     /**
@@ -183,7 +183,8 @@ class helper_plugin_semantic extends DokuWiki_Plugin
     {
         global $license;
         global $conf;
-        return @$license[$conf['license']];
+
+        return (isset($license[$conf['license']]) ? $license[$conf['license']] : null);
     }
 
     /**

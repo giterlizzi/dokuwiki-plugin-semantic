@@ -1,9 +1,10 @@
 <?php
 /**
  * Semantic plugin: Add Schema.org News Article using JSON-LD
- *
+ * 
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Giuseppe Di Terlizzi <giuseppe.diterlizzi@gmail.com>
+ * @copyright  (C) 2015-2023, Giuseppe Di Terlizzi
  */
 
 class syntax_plugin_semantic extends DokuWiki_Syntax_Plugin
