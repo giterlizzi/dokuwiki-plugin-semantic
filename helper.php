@@ -4,13 +4,8 @@
  *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Giuseppe Di Terlizzi <giuseppe.diterlizzi@gmail.com>
- * @copyright  (C) 2015-2019, Giuseppe Di Terlizzi
+ * @copyright  (C) 2015-2022, Giuseppe Di Terlizzi
  */
-
-// must be run within Dokuwiki
-if (!defined('DOKU_INC')) {
-    die();
-}
 
 class helper_plugin_semantic extends DokuWiki_Plugin
 {
@@ -29,7 +24,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         global $conf;
 
         $json_ld = array(
-            '@context'        => 'http://schema.org',
+            '@context'        => 'http://schema.org/',
             '@type'           => 'WebSite',
             'url'             => DOKU_URL,
             'name'            => $conf['title'],
@@ -106,7 +101,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getFirstImage()
     {
-        return ((@$this->meta['relation']['firstimage']) ? $this->meta['relation']['firstimage'] : null);
+        return (isset($this->meta['relation']['firstimage']) ? $this->meta['relation']['firstimage'] : null);
     }
 
     /**
@@ -126,7 +121,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getDescription()
     {
-        return (@$this->meta['description']['abstract'] ? $this->meta['description']['abstract'] : $this->getTitle());
+        return (isset($this->meta['description']['abstract']) ? $this->meta['description']['abstract'] : $this->getTitle());
     }
 
     /**
@@ -156,7 +151,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getTitle()
     {
-        return (@$this->meta['title'] ? $this->meta['title'] : null);
+        return (isset($this->meta['title']) ? $this->meta['title'] : null);
     }
 
     /**
@@ -166,7 +161,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getCreatedDate()
     {
-        return ((@$this->meta['date']['created']) ? $this->meta['date']['created'] : -1);
+        return (isset($this->meta['date']['created']) ? $this->meta['date']['created'] : -1);
     }
 
     /**
@@ -176,7 +171,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getModifiedDate()
     {
-        return ((@$this->meta['date']['modified']) ? $this->meta['date']['modified'] : -1);
+        return (isset($this->meta['date']['modified']) ? $this->meta['date']['modified'] : -1);
     }
 
     /**
@@ -188,7 +183,8 @@ class helper_plugin_semantic extends DokuWiki_Plugin
     {
         global $license;
         global $conf;
-        return @$license[$conf['license']];
+
+        return (isset($license[$conf['license']]) ? $license[$conf['license']] : null);
     }
 
     /**
@@ -219,7 +215,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         $wiki_logo      = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $wiki_logo_info);
 
         $json_ld = array(
-            '@context'         => 'http://schema.org',
+            '@context'         => 'http://schema.org/',
             '@type'            => $type,
             'headline'         => $title,
             'name'             => $title,
@@ -268,7 +264,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         if ($author = $this->getAuthor()) {
 
             $json_ld['author'] = array(
-                '@context' => 'http://schema.org',
+                '@context' => 'http://schema.org/',
                 '@type'    => 'Person',
                 'name'     => $author,
                 'email'    => $user_data['mail'],
@@ -280,7 +276,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
                     $contributor_data = ($this->getConf('hideMail') ? array('mail' => null) : $auth->getUserData($uid));
 
                     $json_ld['contributor'][] = array(
-                        '@context' => 'http://schema.org',
+                        '@context' => 'http://schema.org/',
                         '@type'    => 'Person',
                         'name'     => $fullname,
                         'email'    => $contributor_data['mail'],
@@ -319,7 +315,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         }
 
         $json_ld_webpage = array(
-            '@context' => 'http://schema.org',
+            '@context' => 'http://schema.org/',
             '@type'    => 'WebPage',
         );
 
