@@ -205,7 +205,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         $license        = $this->getLicense();
         $type           = $this->getSchemaOrgType();
         $user_data      = ($this->getConf('hideMail') ? array('mail' => null) : $auth->getUserData($this->getAuthorID()));
-        $license_url    = $license['url'];
+        $license_url    = (isset($license['url']) ? $license['url'] : null);
         $page_url       = wl($this->page, '', true);
         $description    = str_replace("\n", ' ', $this->getDescription());
         $created        = date(DATE_W3C, $this->getCreatedDate());
