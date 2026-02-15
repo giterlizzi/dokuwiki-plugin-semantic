@@ -105,16 +105,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin
     }
 
     /**
-     * Get the URL of the first image in page
-     *
-     * @return string
-     */
-    public function getFirstImageURL()
-    {
-        return ($this->getFirstImage() ? ml($this->getFirstImage(), '', true, '&amp;', true) : null);
-    }
-
-    /**
      * Get page description
      *
      * @return string
@@ -188,6 +178,24 @@ class helper_plugin_semantic extends DokuWiki_Plugin
     }
 
     /**
+     * Get both the page and wiki logo images
+     * 
+     * @return array
+     */
+    public function getImageData()
+    {
+        $page_image_size = array();
+        $page_image = tpl_getMediaFile(array(':' . $this->getFirstImage()), true, $page_image_size);
+        $page_image_info = array('image_url' => $page_image, 'size' => $page_image_size);
+
+        $wiki_logo_size = array();
+        $wiki_logo      = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $wiki_logo_size);
+        $wiki_logo_info = array('image_url' => $wiki_logo, 'size' => $wiki_logo_size);
+        
+        return array('wiki' => $wiki_logo_info, 'page' => $page_image_info);
+    }
+
+    /**
      * Return JSON-LD structured data in according of selected Schema.org type
      *
      * @return array
@@ -211,8 +219,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         $created        = date(DATE_W3C, $this->getCreatedDate());
         $modified       = date(DATE_W3C, $this->getModifiedDate());
         $title          = (isset($this->meta['title']) ? $this->meta['title'] : $this->page);
-        $wiki_logo_info = array();
-        $wiki_logo      = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $wiki_logo_info);
+        $images         = $this->getImageData();
 
         $json_ld = array(
             '@context'         => 'http://schema.org/',
@@ -236,28 +243,22 @@ class helper_plugin_semantic extends DokuWiki_Plugin
                 'name'  => $conf['title'],
                 'logo'  => array(
                     '@type' => 'ImageObject',
-                    'url'   => $wiki_logo,
+                    'url'   => $image['wiki']['image_url'],
                 ),
             ),
 
         );
 
-        if ($image_url = $this->getFirstImageURL()) {
-
-            $image_info    = array();
-            $article_image = tpl_getMediaFile(array(':' . $this->getFirstImage()), true, $image_info);
-
+        // if the page image exists, use that - if not, fall back to the wiki image, or nothing.
+        $image_data = $image['page']['image_url'] ? $image['page'] : ($image['wiki']['image_url'] ? $image['wiki'] : null);
+        
+        if ($image_data) {
             $json_ld['image'] = array(
                 '@type'  => 'ImageObject',
-                'url'    => $image_url,
-                'width'  => $image_info[0],
-                'height' => $image_info[1],
+                'url'    => $image_data['image_url'],
+                'width'  => $image_data['size'][0],
+                'height' => $image_data['size'][1],
             );
-
-        } else {
-
-            // Fallback
-            //$json_ld['image'] = $json_ld['publisher']['logo'];
 
         }
 
@@ -381,13 +382,15 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             $locale .= '_' . strtoupper($locale);
         }
 
+        $images = $this->getImageData();
+
         $open_graph = array(
 
             'og:title'               => $this->getTitle(),
             'og:description'         => str_replace("\n", ' ', $this->getDescription()),
             'og:url'                 => wl($this->page, '', true),
             'og:type'                => 'article',
-            'og:image'               => $this->getFirstImageURL(),
+            'og:image'               => $images['page']['image_url'] ?? $images['wiki']['image_url'],
             'og:locale'              => $locale,
             'og:site_name'           => $conf['title'],
 
