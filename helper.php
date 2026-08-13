@@ -454,7 +454,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             'DC.Publisher'    => $conf['title'],
             'DC.Creator'      => $this->getAuthor(),
             'DC.Contributor'  => $contributors,
-            'DC.Rights'       => $license['name'],
             'DC.Language'     => $conf['lang'],
             'DC.Created'      => date(DATE_W3C, $this->getCreatedDate()),
             'DC.Modified'     => date(DATE_W3C, $this->getModifiedDate()),
@@ -464,6 +463,10 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             'DC.Type'         => 'Text',
             'DC.Format'       => 'text/html',
         ];
+
+        if (isset($license['name'])) {
+            $dublin_core['DC.Rights'] = $license['name'];
+        }
 
         return $dublin_core;
     }
