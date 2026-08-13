@@ -1,16 +1,16 @@
 <?php
+
 /**
  * Semantic plugin: Add Schema.org News Article using JSON-LD
  *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Giuseppe Di Terlizzi <giuseppe.diterlizzi@gmail.com>
- * @copyright  (C) 2015-2022, Giuseppe Di Terlizzi
+ * @copyright  (C) 2015-2026, Giuseppe Di Terlizzi
  */
 
 class helper_plugin_semantic extends DokuWiki_Plugin
 {
-
-    private $meta = array();
+    private $meta = [];
     private $page = null;
 
     /**
@@ -20,23 +20,20 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getWebSite()
     {
-
         global $conf;
 
-        $json_ld = array(
-            '@context'        => 'http://schema.org/',
+        $json_ld = [
             '@type'           => 'WebSite',
             'url'             => DOKU_URL,
             'name'            => $conf['title'],
-            'potentialAction' => array(
+            'potentialAction' => [
                 '@type'       => 'SearchAction',
                 'target'      => DOKU_URL . DOKU_SCRIPT . '?do=search&amp;id={search_term_string}',
                 'query-input' => 'required name=search_term_string',
-            ),
-        );
+            ],
+        ];
 
         return $json_ld;
-
     }
 
     /**
@@ -78,7 +75,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         }
 
         return $this->meta;
-
     }
 
     /**
@@ -141,7 +137,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getAuthorID()
     {
-        return ($this->meta['user'] ? $this->meta['user'] : null);
+        return (isset($this->meta['user']) ? $this->meta['user'] : null);
     }
 
     /**
@@ -152,6 +148,16 @@ class helper_plugin_semantic extends DokuWiki_Plugin
     public function getTitle()
     {
         return (isset($this->meta['title']) ? $this->meta['title'] : null);
+    }
+
+    /**
+     * Get page tags
+     * 
+     * @return array
+     */
+    public function getTags()
+    {
+        return (isset($this->meta['subject']) ? $this->meta['subject'] : []);
     }
 
     /**
@@ -188,6 +194,18 @@ class helper_plugin_semantic extends DokuWiki_Plugin
     }
 
     /**
+     * Get page title
+     * 
+     * @string $page
+     * @return string
+     */
+    private function getPageTitle($page)
+    {
+        $title = p_get_metadata($page, 'title');
+        return $title ? $title : ucfirst(str_replace(['-', '_'], ' ', noNSorNS($page)));
+    }
+
+    /**
      * Return JSON-LD structured data in according of selected Schema.org type
      *
      * @return array
@@ -204,56 +222,65 @@ class helper_plugin_semantic extends DokuWiki_Plugin
 
         $license        = $this->getLicense();
         $type           = $this->getSchemaOrgType();
-        $user_data      = ($this->getConf('hideMail') ? array('mail' => null) : $auth->getUserData($this->getAuthorID()));
+        $user_data      = ($this->getConf('hideMail') ? ['mail' => null] : $auth->getUserData($this->getAuthorID()));
         $license_url    = (($license !== null) and array_key_exists('url', $license)) ? $license['url'] : null;
         $page_url       = wl($this->page, '', true);
         $description    = str_replace("\n", ' ', $this->getDescription());
         $created        = date(DATE_W3C, $this->getCreatedDate());
         $modified       = date(DATE_W3C, $this->getModifiedDate());
         $title          = (isset($this->meta['title']) ? $this->meta['title'] : $this->page);
-        $wiki_logo_info = array();
-        $wiki_logo      = tpl_getMediaFile(array(':wiki:logo.png', ':logo.png', 'images/logo.png'), true, $wiki_logo_info);
+        $wiki_logo_info = [];
+        $wiki_logo      = tpl_getMediaFile([':wiki:logo.png', ':logo.png', 'images/logo.png'], true, $wiki_logo_info);
 
-        $json_ld = array(
-            '@context'         => 'http://schema.org/',
-            '@type'            => $type,
-            'headline'         => $title,
-            'name'             => $title,
-            'datePublished'    => $created,
-            'dateCreated'      => $created,
-            'dateModified'     => $modified,
-            'description'      => $description,
-            'license'          => $license_url,
-            'url'              => $page_url,
+        $json_ld = [
+            '@type'         => $type,
+            'headline'      => $title,
+            'name'          => $title,
+            'datePublished' => $created,
+            'dateCreated'   => $created,
+            'dateModified'  => $modified,
+            'description'   => $description,
+            'license'       => $license_url,
+            'url'           => $page_url,
+            'inLanguage'    => $conf['lang'],
 
-            'mainEntityOfPage' => array(
+            'mainEntityOfPage' => [
                 '@type' => 'WebPage',
                 '@id'   => $page_url,
-            ),
+            ],
 
-            'publisher'        => array(
+            'publisher' => [
                 '@type' => 'Organization',
                 'name'  => $conf['title'],
-                'logo'  => array(
+                'logo'  => [
                     '@type' => 'ImageObject',
                     'url'   => $wiki_logo,
-                ),
-            ),
+                ],
+            ],
 
-        );
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                'url'   => DOKU_URL,
+                'name'  => $conf['title'],
+            ]
+
+        ];
+
+        if ($tags = $this->getTags()) {
+            $json_ld['keywords'] = implode(',', $tags);
+        }
 
         if ($image_url = $this->getFirstImageURL()) {
 
-            $image_info    = array();
-            $article_image = tpl_getMediaFile(array(':' . $this->getFirstImage()), true, $image_info);
+            $image_info    = [];
+            $article_image = tpl_getMediaFile([':' . $this->getFirstImage()], true, $image_info);
 
-            $json_ld['image'] = array(
+            $json_ld['image'] = [
                 '@type'  => 'ImageObject',
                 'url'    => $image_url,
                 'width'  => $image_info[0],
                 'height' => $image_info[1],
-            );
-
+            ];
         } else {
 
             // Fallback
@@ -263,48 +290,51 @@ class helper_plugin_semantic extends DokuWiki_Plugin
 
         if ($author = $this->getAuthor()) {
 
-            $json_ld['author'] = array(
-                '@context' => 'http://schema.org/',
-                '@type'    => 'Person',
-                'name'     => $author,
-                'email'    => $user_data['mail'],
-            );
+            $json_ld['author'] = [
+                '@type' => 'Person',
+                'name'  => $author,
+                'email' => $user_data['mail'],
+            ];
 
             if (isset($this->meta['contributor'])) {
                 foreach ($this->meta['contributor'] as $uid => $fullname) {
 
-                    $contributor_data = ($this->getConf('hideMail') ? array('mail' => null) : $auth->getUserData($uid));
+                    $contributor_data = ($this->getConf('hideMail') ? ['mail' => null] : $auth->getUserData($uid));
 
-                    $json_ld['contributor'][] = array(
-                        '@context' => 'http://schema.org/',
-                        '@type'    => 'Person',
-                        'name'     => $fullname,
-                        'email'    => $contributor_data['mail'],
-                    );
+                    $json_ld['contributor'][] = [
+                        '@type' => 'Person',
+                        'name'  => $fullname,
+                        'email' => $contributor_data['mail'],
+                    ];
                 }
             }
-
         }
 
         return $json_ld;
-
     }
 
     public function getJsonLD()
     {
 
-        $json_ld = array();
+        $json_ld = [];
 
-        if ($structured_data = $this->getStructuredData()) {
-            $json_ld[] = $structured_data;
+        if ($data = $this->getStructuredData()) {
+            $json_ld[] = $data;
         }
 
-        if ($backlinks = $this->getBacklinks()) {
-            $json_ld[] = $backlinks;
+        if ($data = $this->getBreadcrumbs()) {
+            $json_ld[] = $data;
+        }
+
+        if ($data = $this->getBacklinks()) {
+            $json_ld[] = $data;
+        }
+
+        if ($data = $this->getWebSite()) {
+            $json_ld[] = $data;
         }
 
         return $json_ld;
-
     }
 
     public function getBacklinks()
@@ -314,10 +344,9 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             return false;
         }
 
-        $json_ld_webpage = array(
-            '@context' => 'http://schema.org/',
-            '@type'    => 'WebPage',
-        );
+        $json_ld_webpage = [
+            '@type' => 'WebPage',
+        ];
 
         foreach ($backlinks as $pageid) {
             $json_ld_webpage['relatedLink'][] = wl($pageid, '', true);
@@ -326,20 +355,92 @@ class helper_plugin_semantic extends DokuWiki_Plugin
         if (isset($json_ld_webpage['relatedLink'])) {
             return $json_ld_webpage;
         }
+    }
 
+    public function getBreadcrumbs()
+    {
+        global $conf;
+
+        if (!$conf['youarehere']) {
+            return false;
+        }
+
+        $items = [];
+
+        $items[] = [
+            'id'   => $conf['start'],
+            'name' => $this->getPageTitle($conf['start']),
+        ];
+
+        $parts = explode(':', $this->page);
+        $count = count($parts);
+        $page  = '';
+
+        for ($i = 0; $i < $count - 1; $i++) {
+
+            $part = $parts[$i];
+            $page .= ":$part:" . $conf['start'];
+            $page = cleanID($page);
+
+            if ($page == $conf['start']) {
+                continue;
+            }
+
+            if (! page_exists($page)) {
+                continue;
+            }
+
+            $title = $this->getPageTitle($page);
+
+            $items[] = [
+                'id'   => $page,
+                'name' => ($title ? $title : $part),
+            ];
+        }
+
+        $items[] = [
+            'id'   => $this->page,
+            'name' => $this->getPageTitle($this->page),
+        ];
+
+        if (count($items) < 2) {
+            return false;
+        }
+
+        $breadcrumb = [
+            '@type'           => 'BreadcrumbList',
+            'itemListElement' => [],
+        ];
+
+        $last_index = count($items) - 1;
+
+        foreach ($items as $index => $item) {
+            $list_item = [
+                '@type'    => 'ListItem',
+                'position' => $index + 1,
+                'name'     => $item['name'],
+            ];
+
+            if ($index !== $last_index) {
+                $list_item['item'] = wl($item['id'], '', true);
+            }
+
+            $breadcrumb['itemListElement'][] = $list_item;
+        }
+
+        return $breadcrumb;
     }
 
     public function getDublinCore()
     {
-
         global $conf;
 
         if (!$this->meta) {
-            return array();
+            return [];
         }
 
         $license      = $this->getLicense();
-        $contributors = array();
+        $contributors = [];
 
         if (isset($this->meta['contributor']) && is_array($this->meta['contributor'])) {
             foreach ($this->meta['contributor'] as $uid => $fullname) {
@@ -347,30 +448,32 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             }
         }
 
-        $dublin_core = array(
+        $dublin_core = [
             'DC.Title'        => $this->getTitle(),
             'DC.Description'  => str_replace("\n", ' ', $this->getDescription()),
-            'DC.Publisher'    => $this->getAuthor(),
-            'DC.Contributors' => implode(', ', $contributors),
+            'DC.Publisher'    => $conf['title'],
+            'DC.Creator'      => $this->getAuthor(),
+            'DC.Contributor'  => $contributors,
             'DC.Rights'       => $license['name'],
             'DC.Language'     => $conf['lang'],
             'DC.Created'      => date(DATE_W3C, $this->getCreatedDate()),
             'DC.Modified'     => date(DATE_W3C, $this->getModifiedDate()),
             'DC.Date'         => date(DATE_W3C, $this->getCreatedDate()),
             'DC.Identifier'   => "urn:" . $this->page,
-        );
+            'DC.Subject'      => $this->getTags(),
+            'DC.Type'         => 'Text',
+            'DC.Format'       => 'text/html',
+        ];
 
         return $dublin_core;
-
     }
 
     public function getOpenGraph()
     {
-
         global $conf;
 
         if (!$this->meta) {
-            return array();
+            return [];
         }
 
         $locale = $conf['lang'];
@@ -381,8 +484,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             $locale .= '_' . strtoupper($locale);
         }
 
-        $open_graph = array(
-
+        $open_graph = [
             'og:title'               => $this->getTitle(),
             'og:description'         => str_replace("\n", ' ', $this->getDescription()),
             'og:url'                 => wl($this->page, '', true),
@@ -393,13 +495,11 @@ class helper_plugin_semantic extends DokuWiki_Plugin
 
             'article:published_time' => date(DATE_W3C, $this->getCreatedDate()),
             'article:modified_time'  => date(DATE_W3C, $this->getModifiedDate()),
-            'article:section'        => date(DATE_W3C, $this->getModifiedDate()),
+            'article:section'        => getNS($this->page),
             'article:author'         => $this->getAuthor(),
-
-        );
+            'article:tag'            => $this->getTags(),
+        ];
 
         return $open_graph;
-
     }
-
 }

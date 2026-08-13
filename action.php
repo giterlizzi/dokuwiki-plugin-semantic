@@ -1,10 +1,11 @@
 <?php
+
 /**
  * Semantic Action Plugin
  *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Giuseppe Di Terlizzi <giuseppe.diterlizzi@gmail.com>
- * @copyright  (C) 2015-2023, Giuseppe Di Terlizzi
+ * @copyright  (C) 2015-2026, Giuseppe Di Terlizzi
  */
 
 
@@ -15,7 +16,6 @@
  */
 class action_plugin_semantic extends DokuWiki_Action_Plugin
 {
-
     private $helper = null;
 
     public function __construct()
@@ -30,9 +30,7 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function register(Doku_Event_Handler $controller)
     {
-
         if ($this->getConf('useJSONLD')) {
-            $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'website');
             $controller->register_hook('TPL_METAHEADER_OUTPUT', 'BEFORE', $this, 'json_ld');
         }
 
@@ -64,13 +62,11 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function jsinfo(Doku_Event &$event, $param)
     {
-
         global $JSINFO;
 
-        $JSINFO['plugin']['semantic'] = array(
+        $JSINFO['plugin']['semantic'] = [
             'exposeWebService' => $this->getConf('exposeWebService'),
-        );
-
+        ];
     }
 
     /**
@@ -83,7 +79,6 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function ajax(Doku_Event &$event, $param)
     {
-
         if ($event->data !== 'plugin_semantic') {
             return false;
         }
@@ -106,24 +101,8 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
 
         header('Content-Type: application/ld+json');
         print json_encode($json_ld);
+
         return true;
-
-    }
-
-    /**
-     * Expose JSON-JD WebSite schema
-     *
-     * @param Doku_Event $event handler
-     * @param array      $params
-     *
-     * @return void
-     */
-    public function website(Doku_Event &$event, $params)
-    {
-        $event->data["script"][] = array(
-            "type"  => "application/ld+json",
-            "_data" => json_encode($this->helper->getWebSite(), JSON_PRETTY_PRINT),
-        );
     }
 
     /**
@@ -136,21 +115,24 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function json_ld(Doku_Event &$event, $params)
     {
-
         global $ID;
-
         $this->helper->getMetadata($ID);
-        $json_ld = $this->helper->getJsonLD();
 
-        if (!count($json_ld)) {
+        $graph = $this->helper->getJsonLD();
+
+        if (!count($graph)) {
             return false;
         }
 
-        $event->data["script"][] = array(
+        $json_ld = [
+            '@context' => 'https://schema.org',
+            '@graph' => $graph
+        ];
+
+        $event->data["script"][] = [
             "type"  => "application/ld+json",
             "_data" => json_encode($json_ld, JSON_PRETTY_PRINT),
-        );
-
+        ];
     }
 
     /**
@@ -163,7 +145,6 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function meta_description(Doku_Event &$event, $params)
     {
-
         global $ID;
 
         $this->helper->getMetadata($ID);
@@ -172,13 +153,11 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
 
             $description = str_replace("\n", ' ', $description);
 
-            $event->data['meta'][] = array(
+            $event->data['meta'][] = [
                 'name'    => 'description',
                 'content' => $description,
-            );
-
+            ];
         }
-
     }
 
     /**
@@ -191,20 +170,17 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function meta_author(Doku_Event &$event, $params)
     {
-
         global $ID;
 
         $this->helper->getMetadata($ID);
 
         if ($author = $this->helper->getAuthor()) {
 
-            $event->data['meta'][] = array(
+            $event->data['meta'][] = [
                 'name'    => 'author',
                 'content' => $author,
-            );
-
+            ];
         }
-
     }
 
     /**
@@ -217,24 +193,10 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function meta_open_graph(Doku_Event &$event, $params)
     {
-
         global $ID;
 
         $this->helper->getMetadata($ID);
-
-        foreach ($this->helper->getOpenGraph() as $property => $content) {
-
-            if (!$content) {
-                continue;
-            }
-
-            $event->data['meta'][] = array(
-                'property' => $property,
-                'content'  => $content,
-            );
-
-        }
-
+        return $this->setMetaTag('property', $event, $this->helper->getOpenGraph());
     }
 
     /**
@@ -247,24 +209,33 @@ class action_plugin_semantic extends DokuWiki_Action_Plugin
      */
     public function meta_dublin_core(Doku_Event &$event, $params)
     {
-
         global $ID;
 
         $this->helper->getMetadata($ID);
+        return $this->setMetaTag('name', $event, $this->helper->getDublinCore());
+    }
 
-        foreach ($this->helper->getDublinCore() as $name => $content) {
+    private function setMetaTag($tag, Doku_Event &$event, $data)
+    {
+        foreach ($data as $property => $content) {
 
             if (!$content) {
                 continue;
             }
 
-            $event->data['meta'][] = array(
-                'name'    => $name,
-                'content' => $content,
-            );
-
+            if (is_array($content)) {
+                foreach ($content as $item) {
+                    $event->data['meta'][] = [
+                        $tag => $property,
+                        'content'  => $item,
+                    ];
+                }
+            } else {
+                $event->data['meta'][] = [
+                    $tag => $property,
+                    'content'  => $content,
+                ];
+            }
         }
-
     }
-
 }

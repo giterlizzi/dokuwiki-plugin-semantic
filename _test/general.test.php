@@ -8,7 +8,6 @@
  */
 class general_plugin_semantic_test extends DokuWikiTest
 {
-
     /**
      * Simple test to make sure the plugin.info.txt is in correct format
      */
