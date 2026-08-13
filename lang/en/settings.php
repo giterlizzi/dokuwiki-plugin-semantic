@@ -15,4 +15,6 @@ $lang['useJSONLD']            = 'Add JSON-LD';
 $lang['useMetaAuthor']        = 'Add author meta tag';
 $lang['useMetaDescription']   = 'Add description meta tag';
 $lang['useOpenGraph']         = 'Add Open Graph protocol metadata';
-$lang['hideMail']             = 'Hide Author e-Mail address';
+$lang['hideMail']             = 'Hide Author/Contributors e-Mail address';
+$lang['hideUser']             = 'Hide Author/Contributors info';
+$lang['showUserAs']           = 'Author/Contributors info';

@@ -5,12 +5,13 @@
  * @author Giuseppe Di Terlizzi <giuseppe.diterlizzi@gmail.com>
  */
 
-$meta['useMetaDescription']   = array('onoff');
-$meta['useMetaAuthor']        = array('onoff');
-$meta['useDublinCore']        = array('onoff');
-$meta['useOpenGraph']         = array('onoff');
-$meta['useJSONLD']            = array('onoff');
-$meta['exposeWebService']     = array('onoff');
-$meta['defaultSchemaOrgType'] = array('multichoice', '_choices' => array('Article', 'NewsArticle', 'TechArticle', 'BlogPosting', 'Recipe'));
-$meta['excludedPages']        = array('regex');
-$meta['hideMail']             = array('onoff');
+$meta['useMetaDescription']   = ['onoff'];
+$meta['useMetaAuthor']        = ['onoff'];
+$meta['useDublinCore']        = ['onoff'];
+$meta['useOpenGraph']         = ['onoff'];
+$meta['useJSONLD']            = ['onoff'];
+$meta['exposeWebService']     = ['onoff'];
+$meta['defaultSchemaOrgType'] = ['multichoice', '_choices' => ['Article', 'NewsArticle', 'TechArticle', 'BlogPosting', 'Recipe']];
+$meta['excludedPages']        = ['regex'];
+$meta['hideMail']             = ['onoff'];
+$meta['showUserAs']           = ['multichoice', '_choices' => ['loginname', 'fullname']];

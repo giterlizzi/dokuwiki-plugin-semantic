@@ -127,7 +127,7 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getAuthor()
     {
-        return array_key_exists('creator', $this->meta) ? $this->meta['creator'] : null;
+        return (isset($this->meta['creator']) ? $this->meta['creator'] : null);
     }
 
     /**
@@ -212,7 +212,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin
      */
     public function getStructuredData()
     {
-
         global $auth;
         global $conf;
 
@@ -222,7 +221,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin
 
         $license        = $this->getLicense();
         $type           = $this->getSchemaOrgType();
-        $user_data      = ($this->getConf('hideMail') ? ['mail' => null] : $auth->getUserData($this->getAuthorID()));
         $license_url    = (($license !== null) and array_key_exists('url', $license)) ? $license['url'] : null;
         $page_url       = wl($this->page, '', true);
         $description    = str_replace("\n", ' ', $this->getDescription());
@@ -288,7 +286,13 @@ class helper_plugin_semantic extends DokuWiki_Plugin
 
         }
 
-        if ($author = $this->getAuthor()) {
+        if (! $this->getConf('hideUser')) {
+
+            $show_user_as = $this->getConf('showUserAs');
+            $hide_mail    = $this->getConf('hideMail');
+
+            $author    = ($show_user_as == 'loginname') ? $this->getAuthorID() : $this->getAuthor();
+            $user_data = ($hide_mail ? ['mail' => null] : $auth->getUserData($this->getAuthorID()));
 
             $json_ld['author'] = [
                 '@type' => 'Person',
@@ -299,11 +303,11 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             if (isset($this->meta['contributor'])) {
                 foreach ($this->meta['contributor'] as $uid => $fullname) {
 
-                    $contributor_data = ($this->getConf('hideMail') ? ['mail' => null] : $auth->getUserData($uid));
+                    $contributor_data = ($hide_mail ? ['mail' => null] : $auth->getUserData($uid));
 
                     $json_ld['contributor'][] = [
                         '@type' => 'Person',
-                        'name'  => $fullname,
+                        'name'  => ($show_user_as == 'loginname' ? $uid : $fullname),
                         'email' => $contributor_data['mail'],
                     ];
                 }
@@ -315,7 +319,6 @@ class helper_plugin_semantic extends DokuWiki_Plugin
 
     public function getJsonLD()
     {
-
         $json_ld = [];
 
         if ($data = $this->getStructuredData()) {
@@ -439,30 +442,36 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             return [];
         }
 
-        $license      = $this->getLicense();
-        $contributors = [];
-
-        if (isset($this->meta['contributor']) && is_array($this->meta['contributor'])) {
-            foreach ($this->meta['contributor'] as $uid => $fullname) {
-                $contributors[] = $fullname;
-            }
-        }
+        $license = $this->getLicense();
 
         $dublin_core = [
-            'DC.Title'        => $this->getTitle(),
-            'DC.Description'  => str_replace("\n", ' ', $this->getDescription()),
-            'DC.Publisher'    => $conf['title'],
-            'DC.Creator'      => $this->getAuthor(),
-            'DC.Contributor'  => $contributors,
-            'DC.Language'     => $conf['lang'],
-            'DC.Created'      => date(DATE_W3C, $this->getCreatedDate()),
-            'DC.Modified'     => date(DATE_W3C, $this->getModifiedDate()),
-            'DC.Date'         => date(DATE_W3C, $this->getCreatedDate()),
-            'DC.Identifier'   => "urn:" . $this->page,
-            'DC.Subject'      => $this->getTags(),
-            'DC.Type'         => 'Text',
-            'DC.Format'       => 'text/html',
+            'DC.Title'       => $this->getTitle(),
+            'DC.Description' => str_replace("\n", ' ', $this->getDescription()),
+            'DC.Publisher'   => $conf['title'],
+            'DC.Language'    => $conf['lang'],
+            'DC.Created'     => date(DATE_W3C, $this->getCreatedDate()),
+            'DC.Modified'    => date(DATE_W3C, $this->getModifiedDate()),
+            'DC.Date'        => date(DATE_W3C, $this->getCreatedDate()),
+            'DC.Identifier'  => "urn:" . $this->page,
+            'DC.Subject'     => $this->getTags(),
+            'DC.Type'        => 'Text',
+            'DC.Format'      => 'text/html',
         ];
+
+        if (! $this->getConf('hideUser')) {
+
+            $show_user_as = $this->getConf('showUserAs');
+            $contributors = [];
+
+            if (isset($this->meta['contributor']) && is_array($this->meta['contributor'])) {
+                foreach ($this->meta['contributor'] as $uid => $fullname) {
+                    $contributors[] = ($show_user_as == 'loginname' ? $uid : $fullname);
+                }
+            }
+
+            $dublin_core['DC.Creator']     = ($show_user_as == 'loginname' ? $this->getAuthorID() : $this->getAuthor());
+            $dublin_core['DC.Contributor'] = $contributors;
+        }
 
         if (isset($license['name'])) {
             $dublin_core['DC.Rights'] = $license['name'];
@@ -499,9 +508,12 @@ class helper_plugin_semantic extends DokuWiki_Plugin
             'article:published_time' => date(DATE_W3C, $this->getCreatedDate()),
             'article:modified_time'  => date(DATE_W3C, $this->getModifiedDate()),
             'article:section'        => getNS($this->page),
-            'article:author'         => $this->getAuthor(),
             'article:tag'            => $this->getTags(),
         ];
+
+        if (! $this->getConf('hideUser')) {
+            $open_graph['article:author'] = ($this->getConf('showUserAs') == 'loginname' ? $this->getAuthorID() : $this->getAuthor());
+        }
 
         return $open_graph;
     }
